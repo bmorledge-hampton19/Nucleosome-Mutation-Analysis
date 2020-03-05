@@ -1,5 +1,7 @@
 # Given Dr. Wyrick's nucleosome mutation data and background mutation data, 
 # returns a data.table of base and normalized mutation data with respect to dyad position.
+library(data.table)
+
 parseWyrickNucleosomeMutationData = function(mutationDataFilePath, backgroundDataFilePath) {
   
   # Parse data on total mutation counts by dyad position.
@@ -35,4 +37,32 @@ parseWyrickNucleosomeMutationData = function(mutationDataFilePath, backgroundDat
   
   return(normalizedData)
   
+}
+
+
+# Given my (Ben's) nucleosome mutation data and background mutation data, 
+# returns a data.table of base and normalized mutation data with respect to dyad position.
+parseBMHNucleosomeMutationData = function(mutationDataFilePath, backgroundDataFilePath){
+ 
+  # Read in the data
+  nucleosomeMutationData = fread(mutationDataFilePath)
+  expectedMutations = fread(backgroundDataFilePath)
+  
+  # Create a table of normalized values from the given data
+  normalizedData = data.table()
+  normalizedData[,Dyad_Position := expectedMutations$Dyad_Position]
+  normalizedData[,Normalized_Minus_Strand := nucleosomeMutationData$Minus_Strand_Counts/
+                   expectedMutations$Expected_Mutations_Minus_Strand]
+  normalizedData[,Normalized_Plus_Strand := nucleosomeMutationData$Plus_Strand_Counts/
+                   expectedMutations$Expected_Mutations_Plus_Strand]
+  normalizedData[,Normalized_Both_Strands := nucleosomeMutationData$Both_Strands_Counts/
+                   expectedMutations$Expected_Mutations_Both_Strands]
+  
+  # Add a column for aligned, normalized strands
+  normalizedData[,Normalized_Aligned_Strands := 
+                   mapply(function(plus,minus) mean(c(plus,minus)), 
+                          Normalized_Plus_Strand, rev(Normalized_Minus_Strand))]
+  
+  return(normalizedData)
+   
 }
