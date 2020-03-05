@@ -12,13 +12,14 @@ source("Assymetry_Analysis.R")
 
 # Generate a list of prefixes for the data files so that iterating through them is easier later.
 filePrefixes = c("","CtoA_omitted_","CtoG_omitted_","CtoT_omitted_",
-                 "TtoA_omitted_","TtoC_omitted_","TtoG_omitted_")
+                 "TtoA_omitted_","TtoC_omitted_","TtoG_omitted_",
+                 "TtoA_TtoC_omitted_","TtoA_TtoG_omitted_","TtoC_TtoG_omitted_")
 
 # Generate some lists that will store all of our output data.
 dataSetNames=c("No Omissions",filePrefixes[-1])
 
 peakPeriodicities = numeric(length(filePrefixes))
-periodictyPValues = numeric(length(filePrefixes))
+periodicityPValues = numeric(length(filePrefixes))
 
 peakAssymetryTValue = numeric(length(filePrefixes))
 peakAssymetryPValue = numeric(length(filePrefixes))
@@ -31,9 +32,9 @@ for (i in 1:length(filePrefixes)) {
   ##### Parse Data #####
   
   # Parse the data into a normalized format
-  normalizedData = parseWyrickNucleosomeMutationData(
-    paste0("Data/",filePrefixes[i],"ESAD-UK_assymetry_analysis.txt"),
-    paste0("Data/",filePrefixes[i],"ESAD-UK_assymetry_analysis_strand_background.txt"))
+  normalizedData = parseBMHNucleosomeMutationData(
+    paste0("Data/",filePrefixes[i],"ESAD-UK_nucleosome_mutation_counts.txt"),
+    paste0("Data/",filePrefixes[i],"ESAD-UK_nucleosome_mutation_background.txt"))
   
   ##### Periodicity Analysis #####
   
@@ -41,7 +42,7 @@ for (i in 1:length(filePrefixes)) {
   lombResult = lsp(normalizedData[,.(Dyad_Position,Normalized_Both_Strands)], type = "period", plot = FALSE)
   # Store the relevant results!
   peakPeriodicities[i] = lombResult$peak.at[1]
-  pValues[i] = lombResult$p.value
+  periodicityPValues[i] = lombResult$p.value
   
   
   ##### Assymetry Analysis #####
@@ -76,7 +77,7 @@ for (i in 1:length(filePrefixes)) {
 periodicityResults = data.table(Data_Set=dataSetNames,Peak_Periodicity=peakPeriodicities,PValue=periodicityPValues)
 
 extremeAssymetryResults = data.table(Data_Set=dataSetNames, 
-                                     Peak_Assymetry_tValue = peakAssymetryTValue, 
+                                     Peak_Assymetry_TValue = peakAssymetryTValue, 
                                      Peak_Assymetry_PValue = peakAssymetryPValue,
-                                     Valley_Assymetry_tValue = valleyAssymetryTValue, 
-                                     Valley_Assymetry_PValue = valleyAssymetryPValue,)
+                                     Valley_Assymetry_TValue = valleyAssymetryTValue, 
+                                     Valley_Assymetry_PValue = valleyAssymetryPValue)
