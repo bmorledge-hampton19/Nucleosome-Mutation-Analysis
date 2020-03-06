@@ -33,8 +33,12 @@ for (i in 1:length(filePrefixes)) {
   
   # Parse the data into a normalized format
   normalizedData = parseBMHNucleosomeMutationData(
-    paste0("Data/",filePrefixes[i],"ESAD-UK_nucleosome_mutation_counts.txt"),
-    paste0("Data/",filePrefixes[i],"ESAD-UK_nucleosome_mutation_background.txt"))
+    paste0("Data/Raw Counts/",filePrefixes[i],"ESAD-UK_nucleosome_mutation_counts.txt"),
+    paste0("Data/Background Data/",filePrefixes[i],"ESAD-UK_nucleosome_mutation_background.txt"))
+  
+  # Write the normalized data to a new file.
+  fwrite(normalizedData, sep = '\t',
+              file = paste0("Data/Normalized Counts/",filePrefixes[i],"ESAD-UK_nucleosome_mutation_counts_normalized.txt"))
   
   ##### Periodicity Analysis #####
   
@@ -81,3 +85,4 @@ extremeAssymetryResults = data.table(Data_Set=dataSetNames,
                                      Peak_Assymetry_PValue = peakAssymetryPValue,
                                      Valley_Assymetry_TValue = valleyAssymetryTValue, 
                                      Valley_Assymetry_PValue = valleyAssymetryPValue)
+
