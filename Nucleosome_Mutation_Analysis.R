@@ -3,23 +3,24 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
 BiocManager::install("lomb")
 BiocManager::install("quantmod")
+BiocManager::install("bspec")
 
 library(lomb)
 library(data.table)
+library(bspec)
 
 source("Parse_Nucleosome_Mutation_Data.R")
 source("Assymetry_Analysis.R")
 
-# Generate a list of prefixes for the data files so that iterating through them is easier later.
-filePrefixes = c("","CtoA_omitted_","CtoG_omitted_","CtoT_omitted_",
-                 "TtoA_omitted_","TtoC_omitted_","TtoG_omitted_",
-                 "TtoA_TtoC_omitted_","TtoA_TtoG_omitted_","TtoC_TtoG_omitted_")
+filePaths = choose.files(caption = "Select Raw Nucleosome Mutation Data.",
+                         filters = c(c("Tab Separated Values (*.tsv)","Any files"),c("*.tsv","*.*")), index = 1)
 
-# Generate some lists that will store all of our output data.
-dataSetNames=c("No Omissions",filePrefixes[-1])
+# Generate a list of prefixes for the data files so that iterating through them is easier later.
+filePrefixes = sapply(strsplit(basename(filePaths),"_nucleosome"), function(x) x[1])
 
 peakPeriodicities = numeric(length(filePrefixes))
 periodicityPValues = numeric(length(filePrefixes))
+periodicitySNRs = numeric(length(filePrefixes))
 
 peakAssymetryTValue = numeric(length(filePrefixes))
 peakAssymetryPValue = numeric(length(filePrefixes))
@@ -33,20 +34,28 @@ for (i in 1:length(filePrefixes)) {
   
   # Parse the data into a normalized format
   normalizedData = parseBMHNucleosomeMutationData(
-    paste0("Data/Raw Counts/",filePrefixes[i],"ESAD-UK_nucleosome_mutation_counts.txt"),
-    paste0("Data/Background Data/",filePrefixes[i],"ESAD-UK_nucleosome_mutation_background.txt"))
+    paste0("Data/Raw Counts/",filePrefixes[i],"_nucleosome_mutation_counts.tsv"),
+    paste0("Data/Background Data/",filePrefixes[i],"_nucleosome_mutation_background.tsv"))
   
   # Write the normalized data to a new file.
   fwrite(normalizedData, sep = '\t',
-              file = paste0("Data/Normalized Counts/",filePrefixes[i],"ESAD-UK_nucleosome_mutation_counts_normalized.txt"))
+              file = paste0("Data/Normalized Counts/",filePrefixes[i],
+                            "ESAD-UK_nucleosome_mutation_counts_normalized.txt"))
   
   ##### Periodicity Analysis #####
   
   # Calculate the periodicity of the data using a Lomb-Scargle periodiagram.
   lombResult = lsp(normalizedData[,.(Dyad_Position,Normalized_Both_Strands)], type = "period", plot = FALSE)
+  plot(normalizedData[,.(Dyad_Position,Normalized_Both_Strands)],type = 'b', main = filePrefixes[i])
   # Store the relevant results!
   peakPeriodicities[i] = lombResult$peak.at[1]
   periodicityPValues[i] = lombResult$p.value
+  
+  # Calculate the SNR
+  #timeSeries = as.ts(normalizedData[,.(Dyad_Position,Normalized_Both_Strands)])
+  #test = bspec(timeSeries)
+  #PSDEstimate = welchPSD(timeSeries, seglength = 10)
+  #SNRResult = snr(timeSeries, PSDEstimate$power)
   
   
   ##### Assymetry Analysis #####
@@ -78,9 +87,9 @@ for (i in 1:length(filePrefixes)) {
 }
 
 # Create data.tables for all the results.
-periodicityResults = data.table(Data_Set=dataSetNames,Peak_Periodicity=peakPeriodicities,PValue=periodicityPValues)
+periodicityResults = data.table(Data_Set=filePrefixes,Peak_Periodicity=peakPeriodicities,PValue=periodicityPValues)
 
-extremeAssymetryResults = data.table(Data_Set=dataSetNames, 
+extremeAssymetryResults = data.table(Data_Set=filePrefixes, 
                                      Peak_Assymetry_TValue = peakAssymetryTValue, 
                                      Peak_Assymetry_PValue = peakAssymetryPValue,
                                      Valley_Assymetry_TValue = valleyAssymetryTValue, 
