@@ -45,8 +45,8 @@ parseWyrickNucleosomeMutationData = function(mutationDataFilePath, backgroundDat
 parseBMHNucleosomeMutationData = function(mutationDataFilePath, backgroundDataFilePath){
  
   # Read in the data
-  nucleosomeMutationData = fread(mutationDataFilePath)
-  expectedMutations = fread(backgroundDataFilePath)
+  nucleosomeMutationData = fread(file = mutationDataFilePath)
+  expectedMutations = fread(file = backgroundDataFilePath)
   
   # Create a table of normalized values from the given data
   normalizedData = data.table()
